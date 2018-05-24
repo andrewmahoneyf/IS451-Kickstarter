@@ -38,7 +38,7 @@ valid.df <- kickstarter.df[-train.index, ]
 default.ct <- rpart(successful ~ ., data = train.df, method = "class")
 
 # plot tree
-tree <- prp(default.ct, type = 1, extra = 1, varlen = -10)
+tree <- prp(default.ct,branch=1,extra=101,type=1,nn=TRUE)
 
 # classification accuracy measure of the default tree
 default.ct.point.pred <- predict(default.ct, valid.df, type = "class")
@@ -49,7 +49,7 @@ fourfoldplot(confusionMatrix$table)
 
 ################################# ggplots #####################################
 # remove outliers for graphs and regressions 
-kickstarter.df <- filter(kickstarter.df, goal >= 20000, goal <= 100000)
+kickstarter.df <- filter(kickstarter.df, goal >= 5000, goal <= 100000)
 
 # dataframe for successful kickstarters as well as percent of successful
 kickstarter.successful.df <- kickstarter.full.df %>% filter(successful == 1)
@@ -65,7 +65,7 @@ kickstarter.country.percent.df <- kickstarter.df %>% group_by(successful, countr
 # plots
 country_plot <- ggplot(data = kickstarter.successful.df) +
                   geom_point(aes(x = pledged, y = country, color = country)) +
-                  labs(title = "Country Funding")
+                  labs(title = "Successful Funding")
 
 country_plot2 <- ggplot(kickstarter.country.percent.df, aes(x = country, y = percentage)) + 
                     geom_bar(stat = "identity") +
@@ -74,12 +74,11 @@ country_plot2 <- ggplot(kickstarter.country.percent.df, aes(x = country, y = per
 
 days_plot <- ggplot(data =  subset(kickstarter.successful.df, total_days <= 50 & total_days > 10), aes(total_days)) +
                 geom_bar() +
-                labs(title = "Average Days")
-
+                labs(title = "Successful Kickstarter Average Days")
 
 category_plot <- ggplot(data = kickstarter.successful.df) +
                     geom_point(aes(x = pledged, y = category, color = category)) +
-                    labs(title = "Categories Funding")
+                    labs(title = "Successful Funding")
 
 category_plot2 <- ggplot(kickstarter.category.percent.df, aes(x = category, y = percentage)) + 
                     geom_bar(stat = "identity") +
@@ -105,12 +104,14 @@ hist(all.residuals, breaks = 25, xlab = "Residuals")
 
 
 ############################ Logistic Regression #################################
+# Remove unsuccessful variables based on plots
+kickstarter.df <- kickstarter.df %>% 
+                  filter(category %in% c("Technology", "Publishing", "Music", "Games", "Food", "Film & Video", "Design")) %>%
+                  select(-country)
+
 # create reference categories
 kickstarter.df$category <- factor(kickstarter.df$category)
-kickstarter.df$country <- factor(kickstarter.df$country)
-
-kickstarter.df$category <- relevel(kickstarter.df$category, ref = "Music")
-kickstarter.df$country <- relevel(kickstarter.df$country, ref = "US")
+kickstarter.df$category <- relevel(kickstarter.df$category, ref = "Food")
 
 # create training and validation sets
 set.seed(5)
@@ -130,3 +131,4 @@ logit.reg.pred <- predict(logit.reg, valid.df, type = "response")
 pred <- ifelse(logit.reg.pred > 0.5, 1, 0)
 
 confusionMatrix(factor(pred), factor(valid.df$successful))
+fourfoldplot(confusionMatrix$table)
