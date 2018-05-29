@@ -106,7 +106,7 @@ hist(all.residuals, breaks = 25, xlab = "Residuals")
 ############################ Logistic Regression #################################
 # Remove unsuccessful variables based on plots
 kickstarter.df <- kickstarter.df %>% 
-                  filter(category %in% c("Technology", "Publishing", "Music", "Games", "Food", "Film & Video", "Design")) %>%
+                  filter(category %in% c("Technology", "Music", "Games", "Food", "Film & Video", "Fashion", "Design")) %>%
                   select(-country)
 
 # create reference categories
@@ -130,5 +130,5 @@ logit.reg.pred <- predict(logit.reg, valid.df, type = "response")
 # Choose cutoff value and evaluate classification performance
 pred <- ifelse(logit.reg.pred > 0.5, 1, 0)
 
-confusionMatrix(factor(pred), factor(valid.df$successful))
+confusionMatrix <- confusionMatrix(factor(pred), factor(valid.df$successful))
 fourfoldplot(confusionMatrix$table)
